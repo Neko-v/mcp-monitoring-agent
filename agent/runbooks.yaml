@@ -1,0 +1,45 @@
+# /agent/runbooks.yaml
+
+kafka_lag_high:
+  symptom: "Kafka Consumer Lag is high (more than 5 minutes)"
+  diagnosis_steps:
+    - "Check 'kafka_consumergroup_lag' metric in Prometheus."
+    - "Check if the consumer pods are running and healthy."
+    - "Check if message production rate > consumption rate."
+  remediation_actions:
+    - action: "scale_up_consumer"
+      description: "Increase the number of consumer pods."
+      safety: "SAFE - if partition count allows."
+    - action: "restart_consumer"
+      description: "Restart consumer pods to clear stuck threads."
+      safety: "SAFE - standard procedure."
+
+hdfs_datanode_down:
+  symptom: "HDFS DataNode is down or missing"
+  diagnosis_steps:
+    - "Check 'hadoop_datanode_up' metric."
+    - "Check disk usage on the node."
+  remediation_actions:
+    - action: "restart_datanode"
+      description: "Restart the DataNode container."
+      safety: "SAFE - HDFS has replication."
+
+high_cpu_usage:
+  symptom: "Container CPU usage is above 90%"
+  diagnosis_steps:
+    - "Identify which container is using high CPU via 'container_cpu_usage_seconds_total'."
+    - "Check logs for infinite loops or heavy processing."
+  remediation_actions:
+    - action: "scale_up_resource"
+      description: "Increase CPU limit for the pod."
+      safety: "SAFE - requires redeployment."
+
+high_cpu_alert:
+  symptom: "TestAlertHighCPU or High CPU Usage"
+  diagnosis_steps:
+    - "Check actual CPU usage via 'rate(node_cpu_seconds_total{mode!=\"idle\"}[5m])'."
+    - "Check for runaway processes."
+  remediation_actions:
+    - action: "adjust_threshold"
+      description: "If metrics are low but alert fires, increase alert threshold."
+      safety: "SAFE - config change only."
